@@ -57,7 +57,7 @@ struct NowPlayingView: View {
             } label: {
                 Image(systemName: "chevron.down")
                     .font(.headline.weight(.bold))
-                    .frame(width: 42, height: 42)
+                    .frame(width: 44, height: 44)
                     .background(Color.white.opacity(0.08), in: Circle())
             }
             .buttonStyle(.plain)
@@ -76,11 +76,14 @@ struct NowPlayingView: View {
             } label: {
                 Image(systemName: "xmark")
                     .font(.headline.weight(.bold))
-                    .frame(width: 42, height: 42)
+                    .frame(width: 44, height: 44)
                     .background(Color.white.opacity(0.08), in: Circle())
             }
             .buttonStyle(.plain)
         }
+        // Keeps the buttons clear of the sheet's rounded corners.
+        .padding(.horizontal, 10)
+        .padding(.top, 22)
     }
 
     private var songIdentity: some View {
@@ -220,16 +223,13 @@ private struct QueueView: View {
                     .listRowBackground(Color.clear)
                 } else {
                     ForEach(audioPlayer.queue) { song in
-                        SongRowView(song: song, showsAlbum: true) {
+                        SongRowView(
+                            song: song,
+                            showsAlbum: true,
+                            isCurrent: song.id == audioPlayer.currentSong?.id
+                        ) {
                             audioPlayer.load(song, queue: audioPlayer.queue)
                             dismiss()
-                        }
-                        .overlay(alignment: .trailing) {
-                            if song.id == audioPlayer.currentSong?.id {
-                                Image(systemName: "speaker.wave.2.fill")
-                                    .foregroundStyle(Color.musicaAccent)
-                                    .padding(.trailing, 72)
-                            }
                         }
                     }
                 }

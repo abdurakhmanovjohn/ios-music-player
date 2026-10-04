@@ -120,7 +120,7 @@ struct LibraryView: View {
             }
             .sheet(isPresented: $isImporterPresented) {
                 MusicFilePicker { urls in
-                    importFiles(urls)
+                    Task { await importFiles(urls) }
                 }
             }
             .sheet(isPresented: $isPlaylistEditorPresented) {
@@ -147,9 +147,9 @@ struct LibraryView: View {
         )
     }
 
-    private func importFiles(_ urls: [URL]) {
+    private func importFiles(_ urls: [URL]) async {
         do {
-            let importedSongs = try MusicImportService.shared.importFiles(from: urls, modelContext: modelContext)
+            let importedSongs = try await MusicImportService.shared.importFiles(from: urls, modelContext: modelContext)
             if let firstSong = importedSongs.first {
                 let importedIDs = Set(importedSongs.map(\.id))
                 let updatedQueue = importedSongs + songs.filter { !importedIDs.contains($0.id) }

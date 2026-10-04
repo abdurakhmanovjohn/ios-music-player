@@ -9,7 +9,10 @@ final class Song {
     var album: String
     var duration: TimeInterval
     var artworkData: Data?
-    var localFileURL: URL
+    /// Path relative to the app's Documents folder, e.g. "Music/My Song.mp3".
+    /// We store a relative path because the absolute container path can change
+    /// after an app update or reinstall.
+    var relativeFilePath: String
     var dateAdded: Date
     var playCount: Int
     var lastPlayedDate: Date?
@@ -22,19 +25,23 @@ final class Song {
         album: String = "Unknown Album",
         duration: TimeInterval,
         artworkData: Data? = nil,
-        localFileURL: URL,
+        relativeFilePath: String,
         dateAdded: Date = Date(),
         playCount: Int = 0,
         lastPlayedDate: Date? = nil,
         isFavorite: Bool = false
     ) {
+        let fallbackTitle = URL(fileURLWithPath: relativeFilePath)
+            .deletingPathExtension()
+            .lastPathComponent
+
         self.id = id
-        self.title = title.trimmedMusicText(fallback: localFileURL.deletingPathExtension().lastPathComponent)
+        self.title = title.trimmedMusicText(fallback: fallbackTitle)
         self.artist = artist.trimmedMusicText(fallback: "Unknown Artist")
         self.album = album.trimmedMusicText(fallback: "Unknown Album")
         self.duration = duration
         self.artworkData = artworkData
-        self.localFileURL = localFileURL
+        self.relativeFilePath = relativeFilePath
         self.dateAdded = dateAdded
         self.playCount = playCount
         self.lastPlayedDate = lastPlayedDate
@@ -43,6 +50,11 @@ final class Song {
 }
 
 extension Song {
+    /// Resolved at access time, so it stays valid if the app container moves.
+    var localFileURL: URL {
+        URL.documentsDirectory.appending(path: relativeFilePath)
+    }
+
     var displayArtist: String {
         artist.trimmedMusicText(fallback: "Unknown Artist")
     }
@@ -53,6 +65,17 @@ extension Song {
 
     var fileName: String {
         localFileURL.lastPathComponent
+    }
+
+    /// Updates the editable tags. Empty values fall back to the same defaults as import.
+    func updateInfo(title: String, artist: String, album: String) {
+        let fallbackTitle = URL(fileURLWithPath: relativeFilePath)
+            .deletingPathExtension()
+            .lastPathComponent
+
+        self.title = title.trimmedMusicText(fallback: fallbackTitle)
+        self.artist = artist.trimmedMusicText(fallback: "Unknown Artist")
+        self.album = album.trimmedMusicText(fallback: "Unknown Album")
     }
 }
 

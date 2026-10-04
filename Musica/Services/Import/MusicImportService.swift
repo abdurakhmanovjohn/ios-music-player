@@ -35,10 +35,12 @@ final class MusicImportService {
     }()
 
     private let supportedExtensions: Set<String> = ["mp3", "m4a", "aac", "wav"]
+    private static let musicFolderName = "Music"
 
     private init() {}
 
-    func importFiles(from urls: [URL], modelContext: ModelContext) throws -> [Song] {
+    @MainActor
+    func importFiles(from urls: [URL], modelContext: ModelContext) async throws -> [Song] {
         let musicDirectory = try localMusicDirectory()
         var importedSongs: [Song] = []
         var sawUnsupportedFile = false
@@ -59,14 +61,14 @@ final class MusicImportService {
             let destinationURL = uniqueDestinationURL(for: sourceURL, in: musicDirectory)
             try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
 
-            let metadata = metadata(for: destinationURL)
+            let metadata = await metadata(for: destinationURL)
             let song = Song(
                 title: metadata.title ?? sourceURL.deletingPathExtension().lastPathComponent,
                 artist: metadata.artist ?? "Unknown Artist",
                 album: metadata.album ?? "Unknown Album",
                 duration: metadata.duration,
                 artworkData: metadata.artworkData,
-                localFileURL: destinationURL
+                relativeFilePath: "\(Self.musicFolderName)/\(destinationURL.lastPathComponent)"
             )
 
             modelContext.insert(song)
@@ -85,14 +87,8 @@ final class MusicImportService {
     }
 
     private func localMusicDirectory() throws -> URL {
-        let documentsDirectory = try FileManager.default.url(
-            for: .documentDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: true
-        )
-
-        let musicDirectory = documentsDirectory.appendingPathComponent("Music", isDirectory: true)
+        let musicDirectory = URL.documentsDirectory
+            .appending(path: Self.musicFolderName, directoryHint: .isDirectory)
 
         if !FileManager.default.fileExists(atPath: musicDirectory.path) {
             try FileManager.default.createDirectory(at: musicDirectory, withIntermediateDirectories: true)
@@ -119,29 +115,37 @@ final class MusicImportService {
         return candidateURL
     }
 
-    private func metadata(for url: URL) -> ImportedAudioMetadata {
+    /// Reads duration and common tags using the async AVFoundation APIs.
+    /// Any value that can't be read is simply left empty.
+    private func metadata(for url: URL) async -> ImportedAudioMetadata {
         let asset = AVURLAsset(url: url)
-        let durationSeconds = CMTimeGetSeconds(asset.duration)
-        var metadata = ImportedAudioMetadata(
-            duration: durationSeconds.isFinite && durationSeconds > 0 ? durationSeconds : 0
-        )
+        var result = ImportedAudioMetadata()
 
-        for item in asset.commonMetadata {
+        if let time = try? await asset.load(.duration) {
+            let seconds = CMTimeGetSeconds(time)
+            result.duration = seconds.isFinite && seconds > 0 ? seconds : 0
+        }
+
+        guard let items = try? await asset.load(.commonMetadata) else {
+            return result
+        }
+
+        for item in items {
             switch item.commonKey?.rawValue {
             case "title":
-                metadata.title = item.stringValue?.nonEmptyMusicText
+                result.title = (try? await item.load(.stringValue))?.nonEmptyMusicText
             case "artist":
-                metadata.artist = item.stringValue?.nonEmptyMusicText
+                result.artist = (try? await item.load(.stringValue))?.nonEmptyMusicText
             case "albumName":
-                metadata.album = item.stringValue?.nonEmptyMusicText
+                result.album = (try? await item.load(.stringValue))?.nonEmptyMusicText
             case "artwork":
-                metadata.artworkData = item.dataValue
+                result.artworkData = try? await item.load(.dataValue)
             default:
                 continue
             }
         }
 
-        return metadata
+        return result
     }
 }
 

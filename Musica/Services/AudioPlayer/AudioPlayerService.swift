@@ -53,10 +53,66 @@ final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayerDelegat
         super.init()
         configureAudioSession()
         configureRemoteCommands()
+        observeAudioSessionNotifications()
     }
 
     deinit {
         progressTimer?.invalidate()
+    }
+    
+    private func observeAudioSessionNotifications() {
+        let center = NotificationCenter.default
+        let session = AVAudioSession.sharedInstance()
+
+        center.addObserver(
+            self,
+            selector: #selector(handleInterruption(_:)),
+            name: AVAudioSession.interruptionNotification,
+            object: session
+        )
+        center.addObserver(
+            self,
+            selector: #selector(handleRouteChange(_:)),
+            name: AVAudioSession.routeChangeNotification,
+            object: session
+        )
+    }
+
+    /// Phone calls, Siri, alarms, other apps taking over audio.
+    @objc private func handleInterruption(_ notification: Notification) {
+        guard
+            let info = notification.userInfo,
+            let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+            let type = AVAudioSession.InterruptionType(rawValue: typeValue)
+        else { return }
+
+        let optionsValue = info[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+
+        DispatchQueue.main.async { [weak self] in
+            switch type {
+            case .began:
+                self?.pause()
+            case .ended:
+                if AVAudioSession.InterruptionOptions(rawValue: optionsValue).contains(.shouldResume) {
+                    self?.play()
+                }
+            @unknown default:
+                break
+            }
+        }
+    }
+
+    /// Pause when headphones are unplugged or Bluetooth disconnects.
+    @objc private func handleRouteChange(_ notification: Notification) {
+        guard
+            let reasonValue = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
+            let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue),
+            reason == .oldDeviceUnavailable
+        else { return }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.pause()
+        }
     }
 
     func load(_ song: Song, queue newQueue: [Song]? = nil, autoplay: Bool = true) {
@@ -281,7 +337,7 @@ final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayerDelegat
     private func configureAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default, options: [.allowAirPlay])
+            try session.setCategory(.playback, mode: .default)
         } catch {
             print("Musica could not configure background playback: \(error.localizedDescription)")
         }
@@ -337,6 +393,13 @@ final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayerDelegat
         }
     }
 
+    private var cachedArtwork: (songID: UUID, artwork: MPMediaItemArtwork)?
+    
+    func refreshNowPlayingInfo() {
+        cachedArtwork = nil
+        updateNowPlayingInfo()
+    }
+
     private func updateNowPlayingInfo() {
         guard let currentSong else {
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
@@ -352,13 +415,17 @@ final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayerDelegat
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0
         ]
 
-        if let artworkData = currentSong.artworkData,
-           let image = UIImage(data: artworkData) {
-            info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in
-                image
-            }
+        if cachedArtwork?.songID != currentSong.id {
+            let image = currentSong.artworkData.flatMap(UIImage.init(data:))
+                ?? PlaceholderArtwork.image(for: currentSong.title)
+            cachedArtwork = (currentSong.id, Self.makeArtwork(from: image))
         }
+        info[MPMediaItemPropertyArtwork] = cachedArtwork?.artwork
 
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    private nonisolated static func makeArtwork(from image: UIImage) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: image.size) { _ in image }
     }
 }

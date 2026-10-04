@@ -3,7 +3,10 @@ import SwiftUI
 struct SongRowView: View {
     let song: Song
     var showsAlbum = false
+    var isCurrent = false
     var action: () -> Void
+
+    @State private var isEditing = false
 
     var body: some View {
         Button(action: action) {
@@ -15,7 +18,8 @@ struct SongRowView: View {
                     Text(song.title)
                         .font(.body.weight(.semibold))
                         .foregroundStyle(.primary)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
 
                     Text(subtitle)
                         .font(.subheadline)
@@ -23,7 +27,13 @@ struct SongRowView: View {
                         .lineLimit(1)
                 }
 
-                Spacer()
+                Spacer(minLength: 8)
+
+                if isCurrent {
+                    Image(systemName: "speaker.wave.2.fill")
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(Color.musicaAccent)
+                }
 
                 if song.isFavorite {
                     Image(systemName: "heart.fill")
@@ -39,9 +49,22 @@ struct SongRowView: View {
         }
         .buttonStyle(.plain)
         .listRowBackground(Color.clear)
+        .contextMenu {
+            Button {
+                isEditing = true
+            } label: {
+                Label("Edit Info", systemImage: "pencil")
+            }
+        }
+        .sheet(isPresented: $isEditing) {
+            EditSongView(song: song)
+        }
     }
 
     private var subtitle: String {
-        showsAlbum ? "\(song.displayArtist) - \(song.displayAlbum)" : song.displayArtist
+        guard showsAlbum, song.displayAlbum != "Unknown Album" else {
+            return song.displayArtist
+        }
+        return "\(song.displayArtist) · \(song.displayAlbum)"
     }
 }
