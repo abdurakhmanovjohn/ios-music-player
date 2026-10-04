@@ -10,6 +10,7 @@
 		47D92CE23072D3E9007EB4B2 /* PlaceholderArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D92CE13072D3DF007EB4B2 /* PlaceholderArtwork.swift */; };
 		47D92CE43072D74B007EB4B2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 47D92CE33072D74B007EB4B2 /* Assets.xcassets */; };
 		47D92CE63072F98B007EB4B2 /* EditSongView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D92CE53072F983007EB4B2 /* EditSongView.swift */; };
+		47D92CE83072FE5B007EB4B2 /* SongDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D92CE73072FE57007EB4B2 /* SongDeletion.swift */; };
 		B00000000000000000000001 /* Song.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000001 /* Song.swift */; };
 		B00000000000000000000002 /* Playlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000002 /* Playlist.swift */; };
 		B00000000000000000000003 /* LibrarySummaries.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000003 /* LibrarySummaries.swift */; };
@@ -38,6 +39,7 @@
 		47D92CE13072D3DF007EB4B2 /* PlaceholderArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderArtwork.swift; sourceTree = "<group>"; };
 		47D92CE33072D74B007EB4B2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		47D92CE53072F983007EB4B2 /* EditSongView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditSongView.swift; sourceTree = "<group>"; };
+		47D92CE73072FE57007EB4B2 /* SongDeletion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongDeletion.swift; sourceTree = "<group>"; };
 		F00000000000000000000001 /* Song.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Song.swift; sourceTree = "<group>"; };
 		F00000000000000000000002 /* Playlist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Playlist.swift; sourceTree = "<group>"; };
 		F00000000000000000000003 /* LibrarySummaries.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrarySummaries.swift; sourceTree = "<group>"; };
@@ -178,6 +180,7 @@
 		A00000000000000000000018 /* Library */ = {
 			isa = PBXGroup;
 			children = (
+				47D92CE73072FE57007EB4B2 /* SongDeletion.swift */,
 				F00000000000000000000007 /* LibraryOrganizer.swift */,
 			);
 			path = Library;
@@ -316,6 +319,7 @@
 				B00000000000000000000001 /* Song.swift in Sources */,
 				47D92CE23072D3E9007EB4B2 /* PlaceholderArtwork.swift in Sources */,
 				B00000000000000000000002 /* Playlist.swift in Sources */,
+				47D92CE83072FE5B007EB4B2 /* SongDeletion.swift in Sources */,
 				B00000000000000000000003 /* LibrarySummaries.swift in Sources */,
 				B00000000000000000000004 /* MusicaApp.swift in Sources */,
 				B00000000000000000000005 /* MusicaRootView.swift in Sources */,

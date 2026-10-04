@@ -1,12 +1,17 @@
 import SwiftUI
+import SwiftData
 
 struct SongRowView: View {
+    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var audioPlayer: AudioPlayerService
+
     let song: Song
     var showsAlbum = false
     var isCurrent = false
     var action: () -> Void
 
     @State private var isEditing = false
+    @State private var isConfirmingDelete = false
 
     var body: some View {
         Button(action: action) {
@@ -49,15 +54,41 @@ struct SongRowView: View {
         }
         .buttonStyle(.plain)
         .listRowBackground(Color.clear)
+        // Swipe from the left to delete (favorite stays on the right swipe).
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                isConfirmingDelete = true
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
         .contextMenu {
             Button {
                 isEditing = true
             } label: {
                 Label("Edit Info", systemImage: "pencil")
             }
+
+            Button(role: .destructive) {
+                isConfirmingDelete = true
+            } label: {
+                Label("Delete from Library", systemImage: "trash")
+            }
         }
         .sheet(isPresented: $isEditing) {
             EditSongView(song: song)
+        }
+        .confirmationDialog(
+            "Delete this song?",
+            isPresented: $isConfirmingDelete,
+            titleVisibility: .visible
+        ) {
+            Button("Delete from Library", role: .destructive) {
+                SongDeletion.delete(song, modelContext: modelContext, audioPlayer: audioPlayer)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The song and its audio file will be removed from Musica. This can't be undone.")
         }
     }
 

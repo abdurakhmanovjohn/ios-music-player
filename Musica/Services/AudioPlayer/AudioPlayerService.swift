@@ -181,6 +181,20 @@ final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayerDelegat
         stopProgressTimer()
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
+    
+    func remove(_ song: Song) {
+        let wasCurrent = currentSong?.id == song.id
+
+        queue.removeAll { $0.id == song.id }
+        originalQueue.removeAll { $0.id == song.id }
+
+        if wasCurrent {
+            stop()
+        } else if let currentSong {
+            // The queue shifted, so refresh the position of the song that is still playing.
+            currentIndex = queue.firstIndex { $0.id == currentSong.id }
+        }
+    }
 
     func seek(to time: TimeInterval) {
         guard let player else {
