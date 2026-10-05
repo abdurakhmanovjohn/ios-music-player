@@ -24,7 +24,6 @@ struct MusicaApp: App {
         WindowGroup {
             MusicaRootView()
                 .environmentObject(audioPlayer)
-                .preferredColorScheme(.dark)
         }
         .modelContainer(modelContainer)
     }
