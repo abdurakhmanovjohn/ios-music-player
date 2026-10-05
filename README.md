@@ -36,7 +36,7 @@ Add screenshots here, for example:
 - Search across song title, artist and album
 - Mini-player docked above the tab bar (Liquid Glass on iOS 26+)
 - Full-screen Now Playing with large artwork, progress slider and queue
-- Dark-mode-first design, SF Symbols, rounded cards and subtle animations
+- Light and dark mode (follows the system setting), SF Symbols, rounded cards and subtle animations
 
 ## Tech stack
 
