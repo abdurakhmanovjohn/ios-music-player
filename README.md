@@ -21,6 +21,7 @@ Add screenshots here, for example:
 - Playlists
 - Rename a song's title, artist and album: long-press any song and choose **Edit Info**
 - Generated gradient artwork for songs that have none
+- Remove songs from the library (long-press or swipe), which also deletes the stored copy
 
 **Playback**
 - Play, pause, seek, next, previous
